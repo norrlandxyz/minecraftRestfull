@@ -1,0 +1,4 @@
+name: minecraftRestfull
+version: '1.0-SNAPSHOT'
+main: xyz.norrland.minecraftRestfull.MinecraftRestfull
+api-version: '1.21'
