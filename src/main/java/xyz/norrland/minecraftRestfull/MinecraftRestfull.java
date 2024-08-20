@@ -12,8 +12,10 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+
+import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MinecraftRestfull extends JavaPlugin {
 
@@ -25,6 +27,7 @@ public final class MinecraftRestfull extends JavaPlugin {
 
         this.saveDefaultConfig();
         final String AUTH_TOKEN = this.getConfig().getString("auth-token");
+        final int PORT = this.getConfig().getInt("webserver-port");
 
         //vault api
         setupPermissions();
@@ -39,7 +42,7 @@ public final class MinecraftRestfull extends JavaPlugin {
                         throw new UnauthorizedResponse();
                     }
                 })
-                .start(7070);
+                .start(PORT);
 
         //VAULT ENDPOINTS ---------------------------------------------------------------
         web.get(prefix+"/vault/getPlayerGroups/{player_uuid}", ctx -> {
@@ -64,21 +67,73 @@ public final class MinecraftRestfull extends JavaPlugin {
             boolean success = perms.playerRemoveGroup(null, player, group_name);
             ctx.json(Boolean.toString(success));
         });
+
         //---------------------------------------------------------------
 
         //BUKKIT ENDPOINTS ---------------------------------------------------------------
-        web.get(prefix+"/bukkit/dispatchCommand/{command}", ctx -> {
+        web.get(prefix+"/bukkit/dispatchCommand", ctx -> {
+
+            //instead of url encoding (see readme)
+            String command = ctx.body();
+
             ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-            String command = ctx.pathParam("command");
-            AtomicBoolean success = new AtomicBoolean(false);
             Bukkit.getScheduler().runTask(this, () -> {
-                success.set(Bukkit.dispatchCommand(console, command));
+                Bukkit.dispatchCommand(console, command);
             });
+
             ctx.json(true);
+        });
+
+        web.get(prefix+"/bukkit/setWhitelisted/true/{player_uuid}", ctx -> {
+            String player_uuid = ctx.pathParam("player_uuid");
+            OfflinePlayer player = Bukkit.getOfflinePlayer(UUID.fromString(player_uuid));
+
+            boolean response = false;
+
+            if(!player.isWhitelisted()) {
+                Bukkit.getScheduler().runTask(this, () -> {
+                    player.setWhitelisted(true);
+                });
+                response = true;
+            }
+            ctx.json(response);
+        });
+
+        web.get(prefix+"/bukkit/setWhitelisted/false/{player_uuid}", ctx -> {
+            String player_uuid = ctx.pathParam("player_uuid");
+            OfflinePlayer player = Bukkit.getOfflinePlayer(UUID.fromString(player_uuid));
+
+            boolean response = false;
+
+            if(player.isWhitelisted()) {
+                Bukkit.getScheduler().runTask(this, () -> {
+                    player.setWhitelisted(false);
+                });
+                response = true;
+            }
+            ctx.json(response);
+        });
+
+        web.get(prefix+"/bukkit/getWhitelistedPlayers", ctx -> {
+
+            Set<OfflinePlayer> whitelistedPlayers = Bukkit.getWhitelistedPlayers();
+            ArrayList<String> uuids = new ArrayList<>();
+            for(OfflinePlayer player : whitelistedPlayers) {
+                uuids.add(player.getUniqueId().toString());
+            }
+            ctx.json(uuids);
+        });
+
+        web.get(prefix+"/bukkit/isWhitelisted/{player_uuid}", ctx -> {
+
+            String player_uuid = ctx.pathParam("player_uuid");
+            OfflinePlayer player = Bukkit.getOfflinePlayer(UUID.fromString(player_uuid));
+
+            ctx.json(player.isWhitelisted());
         });
         //---------------------------------------------------------------
 
-        getLogger().info("Started webserver on localhost:7070");
+        getLogger().info("Started webserver on localhost:"+PORT);
         //------------------------------------------------------------------
     }
 
