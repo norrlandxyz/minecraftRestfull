@@ -13,8 +13,8 @@ Change auth-token in config.yml
 - `/_minecraftRestfull/vault/getPlayerGroups/{player_uuid}`
 
 ## Example Usage
-`curl -X GET http://localhost:7070/_minecraftRestfull/vault/getPlayerGroups/aaa9-63c7-411b-9601-45e13bd4ce42 -H 'auth-token:  YOUR_SECRET_TOKEN'`
-`curl -X GET http://localhost:7070/_minecraftRestfull/bukkit/dispatchCommand/ -d "say Hello World!" -H 'auth-token:  YOUR_SECRET_TOKEN'`
+- `curl -X GET http://localhost:7070/_minecraftRestfull/vault/getPlayerGroups/aaa9-63c7-411b-9601-45e13bd4ce42 -H 'auth-token:  YOUR_SECRET_TOKEN'`
+- `curl -X GET http://localhost:7070/_minecraftRestfull/bukkit/dispatchCommand/ -d "say Hello World!" -H 'auth-token:  YOUR_SECRET_TOKEN'`
 
 
 ## Dependencies
